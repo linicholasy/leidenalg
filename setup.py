@@ -2,6 +2,7 @@
 
 import os
 import platform
+import subprocess
 import sys
 import glob
 
@@ -15,6 +16,34 @@ if sys.version_info < (3, 7):
 ###########################################################################
 
 from setuptools import setup, Extension
+from setuptools.command.build_ext import build_ext as _build_ext
+
+
+def build_deps():
+    """Build igraph and libleidenalg into build-deps/install/ if not already present."""
+    root = os.path.dirname(os.path.abspath(__file__))
+    install_dir = os.path.join(root, "build-deps", "install")
+
+    igraph_lib = os.path.join(install_dir, "lib", "cmake", "igraph")
+    if not os.path.isdir(igraph_lib):
+        print("Building igraph dependency...")
+        script = os.path.join(root, "scripts", "build_igraph.sh")
+        subprocess.check_call(["bash", script], cwd=root)
+
+    libleiden_lib = os.path.join(install_dir, "lib", "cmake", "libleidenalg")
+    if not os.path.isdir(libleiden_lib):
+        print("Building libleidenalg dependency...")
+        script = os.path.join(root, "scripts", "build_libleidenalg.sh")
+        subprocess.check_call(["bash", script], cwd=root)
+
+
+class build_ext(_build_ext):
+    def run(self):
+        build_deps()
+        super().run()
+
+
+
 
 try:
     from wheel.bdist_wheel import bdist_wheel
@@ -44,7 +73,7 @@ macros = []
 if should_build_abi3_wheel:
     macros.append(("Py_LIMITED_API", "0x03090000"))
 
-cmdclass = {}
+cmdclass = {"build_ext": build_ext}
 
 if should_build_abi3_wheel:
     cmdclass["bdist_wheel"] = bdist_wheel_abi3

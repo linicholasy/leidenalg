@@ -1,4 +1,5 @@
-LIBLEIDENALG_VERSION=0.12.0
+LIBLEIDENALG_BRANCH=pop-constraint
+LIBLEIDENALG_REPO=https://github.com/massafn/libleidenalg.git
 
 ROOT_DIR=`pwd`
 echo "Using root dir ${ROOT_DIR}"
@@ -13,17 +14,21 @@ fi
 cd ${ROOT_DIR}/build-deps/src
 if [ ! -d "libleidenalg" ]; then
   echo ""
-  echo "Cloning libleidenalg into ${ROOT_DIR}/build-deps/src/libleidenalg"
-  # Clone repository if it does not exist yet
-  git clone --branch ${LIBLEIDENALG_VERSION} https://github.com/vtraag/libleidenalg.git --single-branch
+  echo "Cloning libleidenalg (${LIBLEIDENALG_BRANCH}) into ${ROOT_DIR}/build-deps/src/libleidenalg"
+  git clone --branch ${LIBLEIDENALG_BRANCH} ${LIBLEIDENALG_REPO} --single-branch
 fi
 
-# Make sure the git repository points to the correct version
+# Make sure the git repository points to the correct branch
 echo ""
-echo "Checking out ${LIBLEIDENALG_VERSION} in ${ROOT_DIR}/build-deps/src/libleidenalg"
+echo "Checking out ${LIBLEIDENALG_BRANCH} in ${ROOT_DIR}/build-deps/src/libleidenalg"
 cd ${ROOT_DIR}/build-deps/src/libleidenalg
-git fetch origin tag ${LIBLEIDENALG_VERSION} --no-tags
-git checkout ${LIBLEIDENALG_VERSION}
+git fetch origin ${LIBLEIDENALG_BRANCH}
+git checkout ${LIBLEIDENALG_BRANCH}
+
+# Provide a VERSION file so cmake can determine the version without git tags
+if [ ! -f "VERSION" ]; then
+  echo "0.1.0" > VERSION
+fi
 
 # Make build directory
 if [ ! -d "${ROOT_DIR}/build-deps/build/libleidenalg" ]; then
