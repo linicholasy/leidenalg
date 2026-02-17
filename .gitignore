@@ -3,7 +3,7 @@ build/
 dist/
 lib/
 nbproject/
-leidenalg.egg-info/
+*.egg-info/
 wlib/
 bin/
 obj/

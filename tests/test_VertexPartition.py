@@ -1,6 +1,6 @@
 import unittest
 import igraph as ig
-import leidenalg
+import leidenalg_pop as leidenalg
 import random
 from copy import deepcopy
 

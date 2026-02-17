@@ -13,7 +13,7 @@ Test coverage:
 
 import unittest
 import igraph as ig
-import leidenalg
+import leidenalg_pop as leidenalg
 from copy import deepcopy
 
 

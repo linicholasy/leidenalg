@@ -23,7 +23,7 @@ from setuptools.command.build_ext import build_ext as _build_ext
 ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
 DEPS_LIB = os.path.join(ROOT_DIR, "build-deps", "install", "lib")
 DEPS_LIB64 = os.path.join(ROOT_DIR, "build-deps", "install", "lib64")
-PKG_DIR = os.path.join(ROOT_DIR, "src", "leidenalg")
+PKG_DIR = os.path.join(ROOT_DIR, "src", "leidenalg_pop")
 
 
 def build_deps():
@@ -153,8 +153,8 @@ if should_build_abi3_wheel:
 
 setup(
     ext_modules = [
-        Extension('leidenalg._c_leiden',
-                  sources = glob.glob(os.path.join('src', 'leidenalg', '*.cpp')),
+        Extension('leidenalg_pop._c_leiden',
+                  sources = glob.glob(os.path.join('src', 'leidenalg_pop', '*.cpp')),
                   py_limited_api=should_build_abi3_wheel,
                   define_macros=macros,
                   libraries = ['libleidenalg', 'igraph'],
@@ -162,6 +162,6 @@ setup(
                   library_dirs=['build-deps/install/lib', 'build-deps/install/lib64'],
         )
     ],
-    package_data={"leidenalg": ["libigraph*", "liblibleidenalg*"]},
+    package_data={"leidenalg_pop": ["libigraph*", "liblibleidenalg*"]},
     cmdclass=cmdclass
 )
