@@ -890,7 +890,8 @@ class CPMVertexPartition(LinearResolutionParameterVertexPartition):
          resolution-limit-free community detection.  Physical Review E, 84(1),
          016114.  `10.1103/PhysRevE.84.016114 <http://doi.org/10.1103/PhysRevE.84.016114>`_
    """
-  def __init__(self, graph, initial_membership=None, weights=None, node_sizes=None, resolution_parameter=1.0, correct_self_loops=None):
+  def __init__(self, graph, initial_membership=None, weights=None, node_sizes=None, resolution_parameter=1.0, correct_self_loops=None,
+               node_pop=None, pop_lambda=0.0, pop_threshold=0.0):
     """
     Parameters
     ----------
@@ -906,13 +907,25 @@ class CPMVertexPartition(LinearResolutionParameterVertexPartition):
 
     node_sizes : list of int, or vertex attribute
       The quality function takes into account the size of a community, which
-      is defined as the sum over the sizes of each individual node. By default, 
-      the node sizes are set to 1, meaning that the size of a community equals 
-      the number of nodes of a community. If a node already represents an 
+      is defined as the sum over the sizes of each individual node. By default,
+      the node sizes are set to 1, meaning that the size of a community equals
+      the number of nodes of a community. If a node already represents an
       aggregation, this could be reflect in its node size.
 
     resolution_parameter : double
       Resolution parameter.
+
+    node_pop : list of double, or vertex attribute
+      Population of each node. Used for the population constraint penalty.
+      Defaults to None (no penalty applied).
+
+    pop_lambda : double
+      Penalty weight for communities exceeding the population threshold.
+      Defaults to 0.0 (no penalty).
+
+    pop_threshold : double
+      Population threshold above which the penalty kicks in.
+      Defaults to 0.0.
     """
     if initial_membership is not None:
       initial_membership = list(initial_membership)
@@ -935,16 +948,32 @@ class CPMVertexPartition(LinearResolutionParameterVertexPartition):
         # Make sure it is a list
         node_sizes = list(node_sizes)
 
+    if node_pop is not None:
+      if isinstance(node_pop, str):
+        node_pop = graph.vs[node_pop]
+      else:
+        node_pop = list(node_pop)
+
     if correct_self_loops is None:
       correct_self_loops = any(graph.is_loop())
 
+    # Store penalty params for deepcopy and introspection
+    self.pop_lambda = pop_lambda
+    self.pop_threshold = pop_threshold
+    self._node_pop = node_pop
+
     self._partition = _c_leiden._new_CPMVertexPartition(pygraph_t,
-        initial_membership, weights, node_sizes, resolution_parameter, correct_self_loops)
+        initial_membership, weights, node_sizes, resolution_parameter, correct_self_loops,
+        node_pop, pop_lambda, pop_threshold)
     self._update_internal_membership()
 
   def __deepcopy__(self, memo):
     n, directed, edges, weights, node_sizes = _c_leiden._MutableVertexPartition_get_py_igraph(self._partition)
-    new_partition = CPMVertexPartition(self.graph, self.membership, weights, node_sizes, self.resolution_parameter)
+    new_partition = CPMVertexPartition(self.graph, self.membership, weights, node_sizes,
+                                       self.resolution_parameter,
+                                       node_pop=self._node_pop,
+                                       pop_lambda=self.pop_lambda,
+                                       pop_threshold=self.pop_threshold)
     return new_partition
 
   @classmethod
