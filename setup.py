@@ -2,6 +2,7 @@
 
 import os
 import platform
+import shutil
 import subprocess
 import sys
 import glob
@@ -19,30 +20,63 @@ from setuptools import setup, Extension
 from setuptools.command.build_ext import build_ext as _build_ext
 
 
+ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
+DEPS_LIB = os.path.join(ROOT_DIR, "build-deps", "install", "lib")
+DEPS_LIB64 = os.path.join(ROOT_DIR, "build-deps", "install", "lib64")
+PKG_DIR = os.path.join(ROOT_DIR, "src", "leidenalg")
+
+
 def build_deps():
     """Build igraph and libleidenalg into build-deps/install/ if not already present."""
-    root = os.path.dirname(os.path.abspath(__file__))
-    install_dir = os.path.join(root, "build-deps", "install")
+    install_dir = os.path.join(ROOT_DIR, "build-deps", "install")
 
     igraph_lib = os.path.join(install_dir, "lib", "cmake", "igraph")
     if not os.path.isdir(igraph_lib):
         print("Building igraph dependency...")
-        script = os.path.join(root, "scripts", "build_igraph.sh")
-        subprocess.check_call(["bash", script], cwd=root)
+        script = os.path.join(ROOT_DIR, "scripts", "build_igraph.sh")
+        subprocess.check_call(["bash", script], cwd=ROOT_DIR)
 
     libleiden_lib = os.path.join(install_dir, "lib", "cmake", "libleidenalg")
     if not os.path.isdir(libleiden_lib):
         print("Building libleidenalg dependency...")
-        script = os.path.join(root, "scripts", "build_libleidenalg.sh")
-        subprocess.check_call(["bash", script], cwd=root)
+        script = os.path.join(ROOT_DIR, "scripts", "build_libleidenalg.sh")
+        subprocess.check_call(["bash", script], cwd=ROOT_DIR)
+
+
+def copy_shared_libs():
+    """Copy shared libraries into the Python package directory so they are
+    installed alongside the extension and found at runtime."""
+    patterns = ["libigraph*", "liblibleidenalg*"]
+    copied = []
+    for lib_dir in [DEPS_LIB, DEPS_LIB64]:
+        if not os.path.isdir(lib_dir):
+            continue
+        for pattern in patterns:
+            for src in glob.glob(os.path.join(lib_dir, pattern)):
+                # Skip cmake config dirs and static libs
+                if os.path.isdir(src) or src.endswith(".a"):
+                    continue
+                dst = os.path.join(PKG_DIR, os.path.basename(src))
+                if not os.path.exists(dst):
+                    shutil.copy2(src, dst)
+                    copied.append(os.path.basename(src))
+    if copied:
+        print(f"Bundled shared libs: {copied}")
 
 
 class build_ext(_build_ext):
     def run(self):
         build_deps()
+        copy_shared_libs()
+        # Set rpath so the extension finds bundled libs at runtime
+        for ext in self.extensions:
+            if platform.system() == "Linux":
+                ext.extra_link_args = ext.extra_link_args or []
+                ext.extra_link_args.append("-Wl,-rpath,$ORIGIN")
+            elif platform.system() == "Darwin":
+                ext.extra_link_args = ext.extra_link_args or []
+                ext.extra_link_args.append("-Wl,-rpath,@loader_path")
         super().run()
-
-
 
 
 try:
@@ -89,5 +123,6 @@ setup(
                   library_dirs=['build-deps/install/lib', 'build-deps/install/lib64'],
         )
     ],
+    package_data={"leidenalg": ["libigraph*", "liblibleidenalg*"]},
     cmdclass=cmdclass
 )
