@@ -62,6 +62,45 @@ def copy_shared_libs():
                     copied.append(os.path.basename(src))
     if copied:
         print(f"Bundled shared libs: {copied}")
+    if platform.system() == "Darwin":
+        fix_rpath_in_bundled_libs()
+
+
+def fix_rpath_in_bundled_libs():
+    """On macOS, rewrite the rpath embedded in bundled dylibs so they resolve
+    sibling libraries via @loader_path rather than hardcoded build-tree paths.
+
+    cmake typically embeds the build-tree lib directory as an LC_RPATH entry
+    (e.g. /Users/foo/.local/lib).  After we copy the dylibs into the wheel /
+    editable-install package dir, that path no longer contains the igraph dylib,
+    so liblibleidenalg cannot load.  We replace every non-system LC_RPATH with
+    @loader_path so the dynamic linker looks next to the dylib itself.
+    """
+    install_name_tool = shutil.which("install_name_tool")
+    if not install_name_tool:
+        print("Warning: install_name_tool not found; skipping rpath fix")
+        return
+
+    for dylib in glob.glob(os.path.join(PKG_DIR, "*.dylib")):
+        if os.path.islink(dylib):
+            continue  # only process the actual file, not symlinks
+        # Read current rpaths
+        result = subprocess.run(
+            ["otool", "-l", dylib],
+            capture_output=True, text=True
+        )
+        rpaths = []
+        for line in result.stdout.splitlines():
+            line = line.strip()
+            if line.startswith("path "):
+                rpath = line.split()[1]
+                if not rpath.startswith("@"):
+                    rpaths.append(rpath)
+        for old_rpath in rpaths:
+            subprocess.run(
+                [install_name_tool, "-rpath", old_rpath, "@loader_path", dylib],
+                capture_output=True
+            )
 
 
 class build_ext(_build_ext):

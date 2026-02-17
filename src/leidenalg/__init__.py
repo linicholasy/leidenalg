@@ -1,4 +1,35 @@
 # -*- coding: utf-8 -*-
+import ctypes
+import os as _os
+import sys as _sys
+
+def _preload_libleidenalg():
+    """Preload liblibleidenalg so its symbols are in the flat namespace before
+    _c_leiden is imported.  On macOS, Python extensions are linked with
+    -undefined dynamic_lookup, so libleidenalg is not recorded as an explicit
+    LC_LOAD_DYLIB entry; we must load it ourselves with RTLD_GLOBAL."""
+    _pkg_dir = _os.path.dirname(_os.path.abspath(__file__))
+    if _sys.platform == "darwin":
+        _names = ["liblibleidenalg.dylib", "liblibleidenalg.1.dylib", "liblibleidenalg.0.1.0.dylib"]
+    else:
+        _names = ["liblibleidenalg.so", "liblibleidenalg.so.1", "liblibleidenalg.so.0.1.0"]
+    _search = [
+        _pkg_dir,
+        _os.path.join(_os.path.expanduser("~"), ".local", "lib"),
+    ]
+    for _d in _search:
+        for _n in _names:
+            _p = _os.path.join(_d, _n)
+            if _os.path.isfile(_p):
+                try:
+                    ctypes.CDLL(_p, ctypes.RTLD_GLOBAL)
+                    return
+                except OSError:
+                    pass
+
+_preload_libleidenalg()
+del _preload_libleidenalg, ctypes, _os, _sys
+
 r""" This package implements the Leiden algorithm in ``C++`` and exposes it to
 python.  It relies on ``(python-)igraph`` for it to function. Besides the
 relative flexibility of the implementation, it also scales well, and can be run

@@ -11,6 +11,9 @@ Makefile
 *.log
 **/*.o
 **/*.so
+**/*.dylib
+**/*.DS_Store
+.DS_Store
 **/*.pyc
 files.txt
 files_py3.txt
