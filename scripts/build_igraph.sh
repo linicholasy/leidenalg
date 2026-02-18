@@ -3,6 +3,21 @@ IGRAPH_VERSION=1.0.0
 ROOT_DIR=`pwd`
 echo "Using root dir ${ROOT_DIR}"
 
+# Install bison and flex if not available — igraph uses them to generate its
+# graph-format parsers (GML, etc.). On Debian/Ubuntu (Colab) we can apt-get
+# them; on macOS they come via Xcode command-line tools or brew.
+if ! command -v bison >/dev/null 2>&1 || ! command -v flex >/dev/null 2>&1; then
+  echo ""
+  echo "Installing bison and flex (required by igraph)..."
+  if command -v apt-get >/dev/null 2>&1; then
+    apt-get install -y bison flex
+  elif command -v brew >/dev/null 2>&1; then
+    brew install bison flex
+  else
+    echo "Warning: cannot install bison/flex automatically; build may fail"
+  fi
+fi
+
 # Create source directory
 if [ ! -d "${ROOT_DIR}/build-deps/src" ]; then
   echo ""
