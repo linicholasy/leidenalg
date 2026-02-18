@@ -43,10 +43,22 @@ def build_deps():
         subprocess.check_call(["bash", script], cwd=ROOT_DIR)
 
 
-def copy_shared_libs():
+def copy_shared_libs(extra_target_dir=None):
     """Copy shared libraries into the Python package directory so they are
-    installed alongside the extension and found at runtime."""
+    installed alongside the extension and found at runtime.
+
+    extra_target_dir: if given (the setuptools build_lib directory), also copy
+    the libs there so that bdist_wheel picks them up.  bdist_wheel collects
+    files from the build directory, not the source tree, so without this the
+    bundled libs are absent from the installed wheel on Linux/Windows.
+    """
     patterns = ["libigraph*", "liblibleidenalg*"]
+    targets = [PKG_DIR]
+    if extra_target_dir:
+        build_pkg_dir = os.path.join(extra_target_dir, "leidenalg_pop")
+        os.makedirs(build_pkg_dir, exist_ok=True)
+        targets.append(build_pkg_dir)
+
     copied = []
     for lib_dir in [DEPS_LIB, DEPS_LIB64]:
         if not os.path.isdir(lib_dir):
@@ -56,17 +68,19 @@ def copy_shared_libs():
                 # Skip cmake config dirs and static libs
                 if os.path.isdir(src) or src.endswith(".a"):
                     continue
-                dst = os.path.join(PKG_DIR, os.path.basename(src))
-                if not os.path.exists(dst):
-                    shutil.copy2(src, dst)
-                    copied.append(os.path.basename(src))
+                for target in targets:
+                    dst = os.path.join(target, os.path.basename(src))
+                    shutil.copy2(src, dst)  # always overwrite to pick up rebuilds
+                    if target == PKG_DIR:
+                        copied.append(os.path.basename(src))
     if copied:
         print(f"Bundled shared libs: {copied}")
     if platform.system() == "Darwin":
-        fix_rpath_in_bundled_libs()
+        for t in targets:
+            fix_rpath_in_bundled_libs(t)
 
 
-def fix_rpath_in_bundled_libs():
+def fix_rpath_in_bundled_libs(target_dir=None):
     """On macOS, rewrite the rpath embedded in bundled dylibs so they resolve
     sibling libraries via @loader_path rather than hardcoded build-tree paths.
 
@@ -76,12 +90,14 @@ def fix_rpath_in_bundled_libs():
     so liblibleidenalg cannot load.  We replace every non-system LC_RPATH with
     @loader_path so the dynamic linker looks next to the dylib itself.
     """
+    if target_dir is None:
+        target_dir = PKG_DIR
     install_name_tool = shutil.which("install_name_tool")
     if not install_name_tool:
         print("Warning: install_name_tool not found; skipping rpath fix")
         return
 
-    for dylib in glob.glob(os.path.join(PKG_DIR, "*.dylib")):
+    for dylib in glob.glob(os.path.join(target_dir, "*.dylib")):
         if os.path.islink(dylib):
             continue  # only process the actual file, not symlinks
         # Read current rpaths
@@ -106,7 +122,9 @@ def fix_rpath_in_bundled_libs():
 class build_ext(_build_ext):
     def run(self):
         build_deps()
-        copy_shared_libs()
+        # Copy to source dir (editable install) AND build dir (wheel install).
+        # bdist_wheel collects from self.build_lib, not the source tree.
+        copy_shared_libs(extra_target_dir=self.build_lib)
         # Set rpath so the extension finds bundled libs at runtime
         for ext in self.extensions:
             if platform.system() == "Linux":
