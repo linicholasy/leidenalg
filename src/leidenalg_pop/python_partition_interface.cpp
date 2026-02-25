@@ -312,15 +312,21 @@ extern "C"
     PyObject* py_node_pop = NULL;
     double resolution_parameter = 1.0;
     int correct_self_loops = false;
-    double pop_lambda = 0.0;
+    double pop_lambda1 = 0.0;
+    double pop_lambda2 = 0.0;
+    double pop_lambda3 = 0.0;
+    double pop_lambda4 = 0.0;
+    double pop_lambda5 = 0.0;
     double pop_threshold = 0.0;
+    double pop_min_threshold = 0.0;
 
-    static const char* kwlist[] = {"graph", "initial_membership", "weights", "node_sizes", "resolution_parameter", "correct_self_loops", "node_pop", "pop_lambda", "pop_threshold", NULL};
+    static const char* kwlist[] = {"graph", "initial_membership", "weights", "node_sizes", "resolution_parameter", "correct_self_loops", "node_pop", "pop_lambda1", "pop_lambda2", "pop_lambda3", "pop_lambda4", "pop_lambda5", "pop_threshold", "pop_min_threshold", NULL};
 
-    if (!PyArg_ParseTupleAndKeywords(args, keywds, "O|OOOdpOdd", (char**) kwlist,
+    if (!PyArg_ParseTupleAndKeywords(args, keywds, "O|OOOdpOddddddd", (char**) kwlist,
                                      &py_obj_graph, &py_initial_membership, &py_weights, &py_node_sizes,
                                      &resolution_parameter, &correct_self_loops,
-                                     &py_node_pop, &pop_lambda, &pop_threshold))
+                                     &py_node_pop, &pop_lambda1, &pop_lambda2, &pop_lambda3,
+                                     &pop_lambda4, &pop_lambda5, &pop_threshold, &pop_min_threshold))
         return NULL;
 
     try
@@ -354,11 +360,15 @@ extern "C"
         vector<size_t> initial_membership = create_size_t_vector(py_initial_membership);
 
         partition = new CPMVertexPartition(graph, initial_membership, resolution_parameter,
-                                           pop_lambda, pop_threshold);
+                                           pop_lambda1, pop_lambda2, pop_lambda3,
+                                           pop_lambda4, pop_lambda5,
+                                           pop_threshold, pop_min_threshold);
       }
       else
         partition = new CPMVertexPartition(graph, resolution_parameter,
-                                           pop_lambda, pop_threshold);
+                                           pop_lambda1, pop_lambda2, pop_lambda3,
+                                           pop_lambda4, pop_lambda5,
+                                           pop_threshold, pop_min_threshold);
 
       // Do *NOT* forget to remove the graph upon deletion
       partition->destructor_delete_graph = true;

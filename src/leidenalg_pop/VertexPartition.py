@@ -891,7 +891,8 @@ class CPMVertexPartition(LinearResolutionParameterVertexPartition):
          016114.  `10.1103/PhysRevE.84.016114 <http://doi.org/10.1103/PhysRevE.84.016114>`_
    """
   def __init__(self, graph, initial_membership=None, weights=None, node_sizes=None, resolution_parameter=1.0, correct_self_loops=None,
-               node_pop=None, pop_lambda=0.0, pop_threshold=0.0):
+               node_pop=None, pop_lambda1=0.0, pop_lambda2=0.0, pop_lambda3=0.0, pop_lambda4=0.0, pop_lambda5=0.0,
+               pop_threshold=0.0, pop_min_threshold=0.0):
     """
     Parameters
     ----------
@@ -919,13 +920,33 @@ class CPMVertexPartition(LinearResolutionParameterVertexPartition):
       Population of each node. Used for the population constraint penalty.
       Defaults to None (no penalty applied).
 
-    pop_lambda : double
-      Penalty weight for communities exceeding the population threshold.
+    pop_lambda1 : double
+      Linear coefficient for polynomial population penalty.
+      Defaults to 0.0 (no penalty).
+
+    pop_lambda2 : double
+      Quadratic coefficient for polynomial population penalty.
+      Defaults to 0.0 (no penalty).
+
+    pop_lambda3 : double
+      Cubic coefficient for polynomial population penalty.
+      Defaults to 0.0 (no penalty).
+
+    pop_lambda4 : double
+      Quartic coefficient for polynomial population penalty.
+      Defaults to 0.0 (no penalty).
+
+    pop_lambda5 : double
+      Quintic coefficient for polynomial population penalty.
       Defaults to 0.0 (no penalty).
 
     pop_threshold : double
-      Population threshold above which the penalty kicks in.
-      Defaults to 0.0.
+      Upper population threshold. Communities exceeding this are penalised.
+      Defaults to 0.0 (disabled).
+
+    pop_min_threshold : double
+      Lower population threshold. Non-empty communities below this are penalised.
+      Defaults to 0.0 (disabled).
     """
     if initial_membership is not None:
       initial_membership = list(initial_membership)
@@ -958,13 +979,19 @@ class CPMVertexPartition(LinearResolutionParameterVertexPartition):
       correct_self_loops = any(graph.is_loop())
 
     # Store penalty params for deepcopy and introspection
-    self.pop_lambda = pop_lambda
+    self.pop_lambda1 = pop_lambda1
+    self.pop_lambda2 = pop_lambda2
+    self.pop_lambda3 = pop_lambda3
+    self.pop_lambda4 = pop_lambda4
+    self.pop_lambda5 = pop_lambda5
     self.pop_threshold = pop_threshold
+    self.pop_min_threshold = pop_min_threshold
     self._node_pop = node_pop
 
     self._partition = _c_leiden._new_CPMVertexPartition(pygraph_t,
         initial_membership, weights, node_sizes, resolution_parameter, correct_self_loops,
-        node_pop, pop_lambda, pop_threshold)
+        node_pop, pop_lambda1, pop_lambda2, pop_lambda3, pop_lambda4, pop_lambda5,
+        pop_threshold, pop_min_threshold)
     self._update_internal_membership()
 
   def __deepcopy__(self, memo):
@@ -972,8 +999,13 @@ class CPMVertexPartition(LinearResolutionParameterVertexPartition):
     new_partition = CPMVertexPartition(self.graph, self.membership, weights, node_sizes,
                                        self.resolution_parameter,
                                        node_pop=self._node_pop,
-                                       pop_lambda=self.pop_lambda,
-                                       pop_threshold=self.pop_threshold)
+                                       pop_lambda1=self.pop_lambda1,
+                                       pop_lambda2=self.pop_lambda2,
+                                       pop_lambda3=self.pop_lambda3,
+                                       pop_lambda4=self.pop_lambda4,
+                                       pop_lambda5=self.pop_lambda5,
+                                       pop_threshold=self.pop_threshold,
+                                       pop_min_threshold=self.pop_min_threshold)
     return new_partition
 
   @classmethod
