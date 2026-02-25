@@ -1,4 +1,4 @@
-LIBLEIDENALG_BRANCH=pop-constraint
+LIBLEIDENALG_BRANCH=main
 LIBLEIDENALG_REPO=https://github.com/massafn/libleidenalg.git
 
 ROOT_DIR=`pwd`
