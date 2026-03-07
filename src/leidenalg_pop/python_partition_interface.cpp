@@ -318,15 +318,14 @@ extern "C"
     double pop_lambda4 = 0.0;
     double pop_lambda5 = 0.0;
     double pop_threshold = 0.0;
-    double pop_min_threshold = 0.0;
 
-    static const char* kwlist[] = {"graph", "initial_membership", "weights", "node_sizes", "resolution_parameter", "correct_self_loops", "node_pop", "pop_lambda1", "pop_lambda2", "pop_lambda3", "pop_lambda4", "pop_lambda5", "pop_threshold", "pop_min_threshold", NULL};
+    static const char* kwlist[] = {"graph", "initial_membership", "weights", "node_sizes", "resolution_parameter", "correct_self_loops", "node_pop", "pop_lambda1", "pop_lambda2", "pop_lambda3", "pop_lambda4", "pop_lambda5", "pop_threshold", NULL};
 
-    if (!PyArg_ParseTupleAndKeywords(args, keywds, "O|OOOdpOddddddd", (char**) kwlist,
+    if (!PyArg_ParseTupleAndKeywords(args, keywds, "O|OOOdpOdddddd", (char**) kwlist,
                                      &py_obj_graph, &py_initial_membership, &py_weights, &py_node_sizes,
                                      &resolution_parameter, &correct_self_loops,
                                      &py_node_pop, &pop_lambda1, &pop_lambda2, &pop_lambda3,
-                                     &pop_lambda4, &pop_lambda5, &pop_threshold, &pop_min_threshold))
+                                     &pop_lambda4, &pop_lambda5, &pop_threshold))
         return NULL;
 
     try
@@ -362,13 +361,13 @@ extern "C"
         partition = new CPMVertexPartition(graph, initial_membership, resolution_parameter,
                                            pop_lambda1, pop_lambda2, pop_lambda3,
                                            pop_lambda4, pop_lambda5,
-                                           pop_threshold, pop_min_threshold);
+                                           pop_threshold);
       }
       else
         partition = new CPMVertexPartition(graph, resolution_parameter,
                                            pop_lambda1, pop_lambda2, pop_lambda3,
                                            pop_lambda4, pop_lambda5,
-                                           pop_threshold, pop_min_threshold);
+                                           pop_threshold);
 
       // Do *NOT* forget to remove the graph upon deletion
       partition->destructor_delete_graph = true;
@@ -442,18 +441,44 @@ extern "C"
     PyObject* py_obj_graph = NULL;
     PyObject* py_initial_membership = NULL;
     PyObject* py_weights = NULL;
+    PyObject* py_node_pop = NULL;
     double resolution_parameter = 1.0;
+    double pop_lambda = 0.0;
+    double pop_threshold = 0.0;
+    int target_communities = 0;
+    double community_count_lambda = 0.0;
 
-    static const char* kwlist[] = {"graph", "initial_membership", "weights", "resolution_parameter", NULL};
+    static const char* kwlist[] = {"graph", "initial_membership", "weights", "resolution_parameter",
+                                   "node_pop", "pop_lambda", "pop_threshold",
+                                   "target_communities", "community_count_lambda", NULL};
 
-    if (!PyArg_ParseTupleAndKeywords(args, keywds, "O|OOd", (char**) kwlist,
-                                     &py_obj_graph, &py_initial_membership, &py_weights, &resolution_parameter))
+    if (!PyArg_ParseTupleAndKeywords(args, keywds, "O|OOdOddid", (char**) kwlist,
+                                     &py_obj_graph, &py_initial_membership, &py_weights, &resolution_parameter,
+                                     &py_node_pop, &pop_lambda, &pop_threshold,
+                                     &target_communities, &community_count_lambda))
         return NULL;
 
     try
     {
 
       Graph* graph = create_graph_from_py(py_obj_graph, NULL, py_weights);
+
+      if (py_node_pop != NULL && py_node_pop != Py_None)
+      {
+        size_t n = graph->vcount();
+        size_t nb = PyList_Size(py_node_pop);
+        if (nb != n)
+          throw Exception("Population vector not the same size as the number of nodes.");
+        vector<double> node_pop(n);
+        for (size_t v = 0; v < n; v++)
+        {
+          PyObject* py_item = PyList_GetItem(py_node_pop, v);
+          if (!PyNumber_Check(py_item))
+            throw Exception("Expected numerical values for node population vector.");
+          node_pop[v] = PyFloat_AsDouble(py_item);
+        }
+        graph->set_node_pop(node_pop);
+      }
 
       RBConfigurationVertexPartition* partition = NULL;
 
@@ -462,10 +487,14 @@ extern "C"
       {
         vector<size_t> initial_membership = create_size_t_vector(py_initial_membership);
 
-        partition = new RBConfigurationVertexPartition(graph, initial_membership, resolution_parameter);
+        partition = new RBConfigurationVertexPartition(graph, initial_membership, resolution_parameter,
+                                                       pop_lambda, pop_threshold,
+                                                       target_communities, community_count_lambda);
       }
       else
-        partition = new RBConfigurationVertexPartition(graph, resolution_parameter);
+        partition = new RBConfigurationVertexPartition(graph, resolution_parameter,
+                                                       pop_lambda, pop_threshold,
+                                                       target_communities, community_count_lambda);
 
       // Do *NOT* forget to remove the graph upon deletion
       partition->destructor_delete_graph = true;

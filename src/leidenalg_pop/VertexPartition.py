@@ -806,7 +806,9 @@ class RBConfigurationVertexPartition(LinearResolutionParameterVertexPartition):
          `10.1103/PhysRevLett.100.118703 <https://doi.org/10.1103/PhysRevLett.100.118703>`_
 
    """
-  def __init__(self, graph, initial_membership=None, weights=None, resolution_parameter=1.0):
+  def __init__(self, graph, initial_membership=None, weights=None, resolution_parameter=1.0,
+               node_pop=None, pop_lambda=0.0, pop_threshold=0.0,
+               target_communities=0, community_count_lambda=0.0):
     """
     Parameters
     ----------
@@ -822,6 +824,26 @@ class RBConfigurationVertexPartition(LinearResolutionParameterVertexPartition):
 
     resolution_parameter : double
       Resolution parameter.
+
+    node_pop : list of double, or vertex attribute
+      Population of each node. Used for the population constraint penalty.
+      Defaults to None (no penalty applied).
+
+    pop_lambda : double
+      Penalty weight for population constraint.
+      Defaults to 0.0 (no penalty).
+
+    pop_threshold : double
+      Population threshold. Communities exceeding this are penalised.
+      Defaults to 0.0 (disabled).
+
+    target_communities : int
+      Target number of communities. Deviations from this are penalised.
+      Defaults to 0 (disabled).
+
+    community_count_lambda : double
+      Penalty weight for deviating from target community count.
+      Defaults to 0.0 (no penalty).
     """
     if initial_membership is not None:
       initial_membership = list(initial_membership)
@@ -837,13 +859,33 @@ class RBConfigurationVertexPartition(LinearResolutionParameterVertexPartition):
         # Make sure it is a list
         weights = list(weights)
 
+    if node_pop is not None:
+      if isinstance(node_pop, str):
+        node_pop = graph.vs[node_pop]
+      else:
+        node_pop = list(node_pop)
+
+    self.pop_lambda = pop_lambda
+    self.pop_threshold = pop_threshold
+    self.target_communities = target_communities
+    self.community_count_lambda = community_count_lambda
+    self._node_pop = node_pop
+
     self._partition = _c_leiden._new_RBConfigurationVertexPartition(pygraph_t,
-        initial_membership, weights, resolution_parameter)
+        initial_membership, weights, resolution_parameter,
+        node_pop, pop_lambda, pop_threshold,
+        target_communities, community_count_lambda)
     self._update_internal_membership()
 
   def __deepcopy__(self, memo):
     n, directed, edges, weights, node_sizes = _c_leiden._MutableVertexPartition_get_py_igraph(self._partition)
-    new_partition = RBConfigurationVertexPartition(self.graph, self.membership, weights, self.resolution_parameter)
+    new_partition = RBConfigurationVertexPartition(self.graph, self.membership, weights,
+                                                   self.resolution_parameter,
+                                                   node_pop=self._node_pop,
+                                                   pop_lambda=self.pop_lambda,
+                                                   pop_threshold=self.pop_threshold,
+                                                   target_communities=self.target_communities,
+                                                   community_count_lambda=self.community_count_lambda)
     return new_partition
 
 class CPMVertexPartition(LinearResolutionParameterVertexPartition):
@@ -892,7 +934,7 @@ class CPMVertexPartition(LinearResolutionParameterVertexPartition):
    """
   def __init__(self, graph, initial_membership=None, weights=None, node_sizes=None, resolution_parameter=1.0, correct_self_loops=None,
                node_pop=None, pop_lambda1=0.0, pop_lambda2=0.0, pop_lambda3=0.0, pop_lambda4=0.0, pop_lambda5=0.0,
-               pop_threshold=0.0, pop_min_threshold=0.0):
+               pop_threshold=0.0):
     """
     Parameters
     ----------
@@ -943,10 +985,6 @@ class CPMVertexPartition(LinearResolutionParameterVertexPartition):
     pop_threshold : double
       Upper population threshold. Communities exceeding this are penalised.
       Defaults to 0.0 (disabled).
-
-    pop_min_threshold : double
-      Lower population threshold. Non-empty communities below this are penalised.
-      Defaults to 0.0 (disabled).
     """
     if initial_membership is not None:
       initial_membership = list(initial_membership)
@@ -985,13 +1023,12 @@ class CPMVertexPartition(LinearResolutionParameterVertexPartition):
     self.pop_lambda4 = pop_lambda4
     self.pop_lambda5 = pop_lambda5
     self.pop_threshold = pop_threshold
-    self.pop_min_threshold = pop_min_threshold
     self._node_pop = node_pop
 
     self._partition = _c_leiden._new_CPMVertexPartition(pygraph_t,
         initial_membership, weights, node_sizes, resolution_parameter, correct_self_loops,
         node_pop, pop_lambda1, pop_lambda2, pop_lambda3, pop_lambda4, pop_lambda5,
-        pop_threshold, pop_min_threshold)
+        pop_threshold)
     self._update_internal_membership()
 
   def __deepcopy__(self, memo):
@@ -1004,8 +1041,7 @@ class CPMVertexPartition(LinearResolutionParameterVertexPartition):
                                        pop_lambda3=self.pop_lambda3,
                                        pop_lambda4=self.pop_lambda4,
                                        pop_lambda5=self.pop_lambda5,
-                                       pop_threshold=self.pop_threshold,
-                                       pop_min_threshold=self.pop_min_threshold)
+                                       pop_threshold=self.pop_threshold)
     return new_partition
 
   @classmethod
