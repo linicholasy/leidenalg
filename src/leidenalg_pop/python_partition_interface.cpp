@@ -444,17 +444,18 @@ extern "C"
     PyObject* py_node_pop = NULL;
     double resolution_parameter = 1.0;
     double pop_lambda = 0.0;
+    double pop_lambda2 = 0.0;
     double pop_threshold = 0.0;
     int target_communities = 0;
     double community_count_lambda = 0.0;
 
     static const char* kwlist[] = {"graph", "initial_membership", "weights", "resolution_parameter",
-                                   "node_pop", "pop_lambda", "pop_threshold",
+                                   "node_pop", "pop_lambda", "pop_lambda2", "pop_threshold",
                                    "target_communities", "community_count_lambda", NULL};
 
-    if (!PyArg_ParseTupleAndKeywords(args, keywds, "O|OOdOddid", (char**) kwlist,
+    if (!PyArg_ParseTupleAndKeywords(args, keywds, "O|OOdOdddid", (char**) kwlist,
                                      &py_obj_graph, &py_initial_membership, &py_weights, &resolution_parameter,
-                                     &py_node_pop, &pop_lambda, &pop_threshold,
+                                     &py_node_pop, &pop_lambda, &pop_lambda2, &pop_threshold,
                                      &target_communities, &community_count_lambda))
         return NULL;
 
@@ -488,12 +489,12 @@ extern "C"
         vector<size_t> initial_membership = create_size_t_vector(py_initial_membership);
 
         partition = new RBConfigurationVertexPartition(graph, initial_membership, resolution_parameter,
-                                                       pop_lambda, pop_threshold,
+                                                       pop_lambda, pop_lambda2, pop_threshold,
                                                        target_communities, community_count_lambda);
       }
       else
         partition = new RBConfigurationVertexPartition(graph, resolution_parameter,
-                                                       pop_lambda, pop_threshold,
+                                                       pop_lambda, pop_lambda2, pop_threshold,
                                                        target_communities, community_count_lambda);
 
       // Do *NOT* forget to remove the graph upon deletion

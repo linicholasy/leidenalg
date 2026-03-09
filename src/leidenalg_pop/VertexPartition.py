@@ -807,7 +807,7 @@ class RBConfigurationVertexPartition(LinearResolutionParameterVertexPartition):
 
    """
   def __init__(self, graph, initial_membership=None, weights=None, resolution_parameter=1.0,
-               node_pop=None, pop_lambda=0.0, pop_threshold=0.0,
+               node_pop=None, pop_lambda=0.0, pop_lambda2=0.0, pop_threshold=0.0,
                target_communities=0, community_count_lambda=0.0):
     """
     Parameters
@@ -866,6 +866,7 @@ class RBConfigurationVertexPartition(LinearResolutionParameterVertexPartition):
         node_pop = list(node_pop)
 
     self.pop_lambda = pop_lambda
+    self.pop_lambda2 = pop_lambda2
     self.pop_threshold = pop_threshold
     self.target_communities = target_communities
     self.community_count_lambda = community_count_lambda
@@ -873,7 +874,7 @@ class RBConfigurationVertexPartition(LinearResolutionParameterVertexPartition):
 
     self._partition = _c_leiden._new_RBConfigurationVertexPartition(pygraph_t,
         initial_membership, weights, resolution_parameter,
-        node_pop, pop_lambda, pop_threshold,
+        node_pop, pop_lambda, pop_lambda2, pop_threshold,
         target_communities, community_count_lambda)
     self._update_internal_membership()
 
@@ -883,6 +884,7 @@ class RBConfigurationVertexPartition(LinearResolutionParameterVertexPartition):
                                                    self.resolution_parameter,
                                                    node_pop=self._node_pop,
                                                    pop_lambda=self.pop_lambda,
+                                                   pop_lambda2=self.pop_lambda2,
                                                    pop_threshold=self.pop_threshold,
                                                    target_communities=self.target_communities,
                                                    community_count_lambda=self.community_count_lambda)
