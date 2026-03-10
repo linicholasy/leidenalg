@@ -442,7 +442,7 @@ extern "C"
     PyObject* py_initial_membership = NULL;
     PyObject* py_weights = NULL;
     double resolution_parameter = 1.0;
-    PyObject* py_node_sizes = NULL;
+    PyObject* py_node_pop = NULL;
     double pop_lambda = 0.0;
     double pop_lambda2 = 0.0;
     double pop_threshold = 0.0;
@@ -450,19 +450,37 @@ extern "C"
     double community_count_lambda = 0.0;
 
     static const char* kwlist[] = {"graph", "initial_membership", "weights", "resolution_parameter",
-                                   "node_sizes", "pop_lambda", "pop_lambda2", "pop_threshold",
+                                   "node_pop", "pop_lambda", "pop_lambda2", "pop_threshold",
                                    "target_communities", "community_count_lambda", NULL};
 
     if (!PyArg_ParseTupleAndKeywords(args, keywds, "O|OOdOdddid", (char**) kwlist,
                                      &py_obj_graph, &py_initial_membership, &py_weights, &resolution_parameter,
-                                     &py_node_sizes, &pop_lambda, &pop_lambda2, &pop_threshold,
+                                     &py_node_pop, &pop_lambda, &pop_lambda2, &pop_threshold,
                                      &target_communities, &community_count_lambda))
         return NULL;
 
     try
     {
 
-      Graph* graph = create_graph_from_py(py_obj_graph, py_node_sizes, py_weights);
+      Graph* graph = create_graph_from_py(py_obj_graph, NULL, py_weights);
+
+      // Parse and set population vector if provided
+      if (py_node_pop != NULL && py_node_pop != Py_None)
+      {
+        size_t n = graph->vcount();
+        size_t nb = PyList_Size(py_node_pop);
+        if (nb != n)
+          throw Exception("Population vector not the same size as the number of nodes.");
+        vector<double> node_pop(n);
+        for (size_t v = 0; v < n; v++)
+        {
+          PyObject* py_item = PyList_GetItem(py_node_pop, v);
+          if (!PyNumber_Check(py_item))
+            throw Exception("Expected numerical values for node population vector.");
+          node_pop[v] = PyFloat_AsDouble(py_item);
+        }
+        graph->set_node_pop(node_pop);
+      }
 
       RBConfigurationVertexPartition* partition = NULL;
 

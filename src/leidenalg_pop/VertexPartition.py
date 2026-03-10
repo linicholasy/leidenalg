@@ -807,7 +807,7 @@ class RBConfigurationVertexPartition(LinearResolutionParameterVertexPartition):
 
    """
   def __init__(self, graph, initial_membership=None, weights=None, resolution_parameter=1.0,
-               node_sizes=None, pop_lambda=0.0, pop_lambda2=0.0, pop_threshold=0.0,
+               node_pop=None, pop_lambda=0.0, pop_lambda2=0.0, pop_threshold=0.0,
                target_communities=0, community_count_lambda=0.0):
     """
     Parameters
@@ -825,20 +825,20 @@ class RBConfigurationVertexPartition(LinearResolutionParameterVertexPartition):
     resolution_parameter : double
       Resolution parameter.
 
-    node_sizes : list of double, or vertex attribute
-      Size of each node. Used for the size constraint penalty.
-      Defaults to None (1.0 per node).
+    node_pop : list of double, or vertex attribute
+      Population of each node. Used for the population constraint penalty.
+      Defaults to None (0.0 per node).
 
     pop_lambda : double
-      Linear penalty weight for size constraint.
+      Linear penalty weight for population constraint.
       Defaults to 0.0 (no penalty).
 
     pop_lambda2 : double
-      Quadratic penalty weight for size constraint.
+      Quadratic penalty weight for population constraint.
       Defaults to 0.0 (no penalty).
 
     pop_threshold : double
-      Size threshold. Penalty is based on |csize - threshold|.
+      Population threshold. Penalty is based on |cpop - threshold|.
       Defaults to 0.0.
 
     target_communities : int
@@ -863,22 +863,22 @@ class RBConfigurationVertexPartition(LinearResolutionParameterVertexPartition):
         # Make sure it is a list
         weights = list(weights)
 
-    if node_sizes is not None:
-      if isinstance(node_sizes, str):
-        node_sizes = graph.vs[node_sizes]
+    if node_pop is not None:
+      if isinstance(node_pop, str):
+        node_pop = graph.vs[node_pop]
       else:
-        node_sizes = list(node_sizes)
+        node_pop = list(node_pop)
 
     self.pop_lambda = pop_lambda
     self.pop_lambda2 = pop_lambda2
     self.pop_threshold = pop_threshold
     self.target_communities = target_communities
     self.community_count_lambda = community_count_lambda
-    self._node_sizes = node_sizes
+    self._node_pop = node_pop
 
     self._partition = _c_leiden._new_RBConfigurationVertexPartition(pygraph_t,
         initial_membership, weights, resolution_parameter,
-        node_sizes, pop_lambda, pop_lambda2, pop_threshold,
+        node_pop, pop_lambda, pop_lambda2, pop_threshold,
         target_communities, community_count_lambda)
     self._update_internal_membership()
 
@@ -886,7 +886,7 @@ class RBConfigurationVertexPartition(LinearResolutionParameterVertexPartition):
     n, directed, edges, weights, node_sizes = _c_leiden._MutableVertexPartition_get_py_igraph(self._partition)
     new_partition = RBConfigurationVertexPartition(self.graph, self.membership, weights,
                                                    self.resolution_parameter,
-                                                   node_sizes=self._node_sizes,
+                                                   node_pop=self._node_pop,
                                                    pop_lambda=self.pop_lambda,
                                                    pop_lambda2=self.pop_lambda2,
                                                    pop_threshold=self.pop_threshold,
