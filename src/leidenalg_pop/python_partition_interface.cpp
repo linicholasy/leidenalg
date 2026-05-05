@@ -311,6 +311,7 @@ extern "C"
     PyObject* py_node_sizes = NULL;
     PyObject* py_node_pop = NULL;
     PyObject* py_votes = NULL;
+    PyObject* py_neighbors = NULL;
     double resolution_parameter = 1.0;
     int correct_self_loops = false;
     double pop_lambda1 = 0.0;
@@ -320,13 +321,13 @@ extern "C"
     double pop_lambda5 = 0.0;
     double pop_threshold = 0.0;
 
-    static const char* kwlist[] = {"graph", "initial_membership", "weights", "node_sizes", "resolution_parameter", "correct_self_loops", "node_pop", "pop_lambda1", "pop_lambda2", "pop_lambda3", "pop_lambda4", "pop_lambda5", "pop_threshold", "votes", NULL};
+    static const char* kwlist[] = {"graph", "initial_membership", "weights", "node_sizes", "resolution_parameter", "correct_self_loops", "node_pop", "pop_lambda1", "pop_lambda2", "pop_lambda3", "pop_lambda4", "pop_lambda5", "pop_threshold", "votes", "neighbors", NULL};
 
-    if (!PyArg_ParseTupleAndKeywords(args, keywds, "O|OOOdpOddddddO", (char**) kwlist,
+    if (!PyArg_ParseTupleAndKeywords(args, keywds, "O|OOOdpOddddddOO", (char**) kwlist,
                                      &py_obj_graph, &py_initial_membership, &py_weights, &py_node_sizes,
                                      &resolution_parameter, &correct_self_loops,
                                      &py_node_pop, &pop_lambda1, &pop_lambda2, &pop_lambda3,
-                                     &pop_lambda4, &pop_lambda5, &pop_threshold, &py_votes))
+                                     &pop_lambda4, &pop_lambda5, &pop_threshold, &py_votes, &py_neighbors))
         return NULL;
 
     try
@@ -371,6 +372,33 @@ extern "C"
           }
         }
         graph->set_votes(votes);
+      }
+
+      if (py_neighbors != NULL && py_neighbors != Py_None)
+      {
+        size_t n = graph->vcount();
+        if ((size_t) PyList_Size(py_neighbors) != n)
+          throw Exception("Neighbors vector not the same size as the number of nodes.");
+        vector< vector<size_t> > neighbors(n);
+        for (size_t v = 0; v < n; v++)
+        {
+          PyObject* py_row = PyList_GetItem(py_neighbors, v);
+          if (!PyList_Check(py_row))
+            throw Exception("Each neighbors entry must be a list.");
+          size_t k = PyList_Size(py_row);
+          neighbors[v].resize(k);
+          for (size_t j = 0; j < k; j++)
+          {
+            PyObject* py_item = PyList_GetItem(py_row, j);
+            if (!PyLong_Check(py_item))
+              throw Exception("Expected integer values in neighbors entries.");
+            long val = PyLong_AsLong(py_item);
+            if (val < 0)
+              throw Exception("Neighbor indices must be non-negative.");
+            neighbors[v][j] = (size_t) val;
+          }
+        }
+        graph->set_neighbors(neighbors);
       }
 
       CPMVertexPartition* partition = NULL;
@@ -466,6 +494,7 @@ extern "C"
     double resolution_parameter = 1.0;
     PyObject* py_node_pop = NULL;
     PyObject* py_votes = NULL;
+    PyObject* py_neighbors = NULL;
     double pop_lambda = 0.0;
     double pop_lambda2 = 0.0;
     double pop_threshold = 0.0;
@@ -474,12 +503,12 @@ extern "C"
 
     static const char* kwlist[] = {"graph", "initial_membership", "weights", "resolution_parameter",
                                    "node_pop", "pop_lambda", "pop_lambda2", "pop_threshold",
-                                   "target_communities", "community_count_lambda", "votes", NULL};
+                                   "target_communities", "community_count_lambda", "votes", "neighbors", NULL};
 
-    if (!PyArg_ParseTupleAndKeywords(args, keywds, "O|OOdOdddidO", (char**) kwlist,
+    if (!PyArg_ParseTupleAndKeywords(args, keywds, "O|OOdOdddidOO", (char**) kwlist,
                                      &py_obj_graph, &py_initial_membership, &py_weights, &resolution_parameter,
                                      &py_node_pop, &pop_lambda, &pop_lambda2, &pop_threshold,
-                                     &target_communities, &community_count_lambda, &py_votes))
+                                     &target_communities, &community_count_lambda, &py_votes, &py_neighbors))
         return NULL;
 
     try
@@ -524,6 +553,33 @@ extern "C"
           }
         }
         graph->set_votes(votes);
+      }
+
+      if (py_neighbors != NULL && py_neighbors != Py_None)
+      {
+        size_t n = graph->vcount();
+        if ((size_t) PyList_Size(py_neighbors) != n)
+          throw Exception("Neighbors vector not the same size as the number of nodes.");
+        vector< vector<size_t> > neighbors(n);
+        for (size_t v = 0; v < n; v++)
+        {
+          PyObject* py_row = PyList_GetItem(py_neighbors, v);
+          if (!PyList_Check(py_row))
+            throw Exception("Each neighbors entry must be a list.");
+          size_t k = PyList_Size(py_row);
+          neighbors[v].resize(k);
+          for (size_t j = 0; j < k; j++)
+          {
+            PyObject* py_item = PyList_GetItem(py_row, j);
+            if (!PyLong_Check(py_item))
+              throw Exception("Expected integer values in neighbors entries.");
+            long val = PyLong_AsLong(py_item);
+            if (val < 0)
+              throw Exception("Neighbor indices must be non-negative.");
+            neighbors[v][j] = (size_t) val;
+          }
+        }
+        graph->set_neighbors(neighbors);
       }
 
       RBConfigurationVertexPartition* partition = NULL;
