@@ -808,7 +808,8 @@ class RBConfigurationVertexPartition(LinearResolutionParameterVertexPartition):
    """
   def __init__(self, graph, initial_membership=None, weights=None, resolution_parameter=1.0,
                node_pop=None, pop_lambda=0.0, pop_lambda2=0.0, pop_threshold=0.0,
-               target_communities=0, community_count_lambda=0.0, votes=None, neighbors=None):
+               target_communities=0, community_count_lambda=0.0, votes=None, neighbors=None,
+               eg_lambda=0.0, eg_lambda2=0.0, eg_target=0.0):
     """
     Parameters
     ----------
@@ -884,6 +885,9 @@ class RBConfigurationVertexPartition(LinearResolutionParameterVertexPartition):
     self.pop_threshold = pop_threshold
     self.target_communities = target_communities
     self.community_count_lambda = community_count_lambda
+    self.eg_lambda = eg_lambda
+    self.eg_lambda2 = eg_lambda2
+    self.eg_target = eg_target
     self._node_pop = node_pop
     self._votes = votes
     self._neighbors = neighbors
@@ -891,7 +895,8 @@ class RBConfigurationVertexPartition(LinearResolutionParameterVertexPartition):
     self._partition = _c_leiden._new_RBConfigurationVertexPartition(pygraph_t,
         initial_membership, weights, resolution_parameter,
         node_pop, pop_lambda, pop_lambda2, pop_threshold,
-        target_communities, community_count_lambda, votes, neighbors)
+        target_communities, community_count_lambda, votes, neighbors,
+        eg_lambda, eg_lambda2, eg_target)
     self._update_internal_membership()
 
   def __deepcopy__(self, memo):
@@ -905,7 +910,10 @@ class RBConfigurationVertexPartition(LinearResolutionParameterVertexPartition):
                                                    target_communities=self.target_communities,
                                                    community_count_lambda=self.community_count_lambda,
                                                    votes=self._votes,
-                                                   neighbors=self._neighbors)
+                                                   neighbors=self._neighbors,
+                                                   eg_lambda=self.eg_lambda,
+                                                   eg_lambda2=self.eg_lambda2,
+                                                   eg_target=self.eg_target)
     return new_partition
 
 class CPMVertexPartition(LinearResolutionParameterVertexPartition):

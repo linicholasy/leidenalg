@@ -500,15 +500,20 @@ extern "C"
     double pop_threshold = 0.0;
     int target_communities = 0;
     double community_count_lambda = 0.0;
+    double eg_lambda = 0.0;
+    double eg_lambda2 = 0.0;
+    double eg_target = 0.0;
 
     static const char* kwlist[] = {"graph", "initial_membership", "weights", "resolution_parameter",
                                    "node_pop", "pop_lambda", "pop_lambda2", "pop_threshold",
-                                   "target_communities", "community_count_lambda", "votes", "neighbors", NULL};
+                                   "target_communities", "community_count_lambda", "votes", "neighbors",
+                                   "eg_lambda", "eg_lambda2", "eg_target", NULL};
 
-    if (!PyArg_ParseTupleAndKeywords(args, keywds, "O|OOdOdddidOO", (char**) kwlist,
+    if (!PyArg_ParseTupleAndKeywords(args, keywds, "O|OOdOdddidOOddd", (char**) kwlist,
                                      &py_obj_graph, &py_initial_membership, &py_weights, &resolution_parameter,
                                      &py_node_pop, &pop_lambda, &pop_lambda2, &pop_threshold,
-                                     &target_communities, &community_count_lambda, &py_votes, &py_neighbors))
+                                     &target_communities, &community_count_lambda, &py_votes, &py_neighbors,
+                                     &eg_lambda, &eg_lambda2, &eg_target))
         return NULL;
 
     try
@@ -591,12 +596,14 @@ extern "C"
 
         partition = new RBConfigurationVertexPartition(graph, initial_membership, resolution_parameter,
                                                        pop_lambda, pop_lambda2, pop_threshold,
-                                                       target_communities, community_count_lambda);
+                                                       target_communities, community_count_lambda,
+                                                       eg_lambda, eg_lambda2, eg_target);
       }
       else
         partition = new RBConfigurationVertexPartition(graph, resolution_parameter,
                                                        pop_lambda, pop_lambda2, pop_threshold,
-                                                       target_communities, community_count_lambda);
+                                                       target_communities, community_count_lambda,
+                                                       eg_lambda, eg_lambda2, eg_target);
 
       // Do *NOT* forget to remove the graph upon deletion
       partition->destructor_delete_graph = true;
