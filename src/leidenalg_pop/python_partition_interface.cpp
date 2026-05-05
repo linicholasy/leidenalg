@@ -310,6 +310,7 @@ extern "C"
     PyObject* py_weights = NULL;
     PyObject* py_node_sizes = NULL;
     PyObject* py_node_pop = NULL;
+    PyObject* py_votes = NULL;
     double resolution_parameter = 1.0;
     int correct_self_loops = false;
     double pop_lambda1 = 0.0;
@@ -319,13 +320,13 @@ extern "C"
     double pop_lambda5 = 0.0;
     double pop_threshold = 0.0;
 
-    static const char* kwlist[] = {"graph", "initial_membership", "weights", "node_sizes", "resolution_parameter", "correct_self_loops", "node_pop", "pop_lambda1", "pop_lambda2", "pop_lambda3", "pop_lambda4", "pop_lambda5", "pop_threshold", NULL};
+    static const char* kwlist[] = {"graph", "initial_membership", "weights", "node_sizes", "resolution_parameter", "correct_self_loops", "node_pop", "pop_lambda1", "pop_lambda2", "pop_lambda3", "pop_lambda4", "pop_lambda5", "pop_threshold", "votes", NULL};
 
-    if (!PyArg_ParseTupleAndKeywords(args, keywds, "O|OOOdpOdddddd", (char**) kwlist,
+    if (!PyArg_ParseTupleAndKeywords(args, keywds, "O|OOOdpOddddddO", (char**) kwlist,
                                      &py_obj_graph, &py_initial_membership, &py_weights, &py_node_sizes,
                                      &resolution_parameter, &correct_self_loops,
                                      &py_node_pop, &pop_lambda1, &pop_lambda2, &pop_lambda3,
-                                     &pop_lambda4, &pop_lambda5, &pop_threshold))
+                                     &pop_lambda4, &pop_lambda5, &pop_threshold, &py_votes))
         return NULL;
 
     try
@@ -333,7 +334,6 @@ extern "C"
 
       Graph* graph = create_graph_from_py(py_obj_graph, py_node_sizes, py_weights, false, correct_self_loops);
 
-      // Parse and set population vector if provided
       if (py_node_pop != NULL && py_node_pop != Py_None)
       {
         size_t n = graph->vcount();
@@ -349,6 +349,28 @@ extern "C"
           node_pop[v] = PyFloat_AsDouble(py_item);
         }
         graph->set_node_pop(node_pop);
+      }
+
+      if (py_votes != NULL && py_votes != Py_None)
+      {
+        size_t n = graph->vcount();
+        if ((size_t) PyList_Size(py_votes) != n)
+          throw Exception("Votes vector not the same size as the number of nodes.");
+        vector< std::array<double, 3> > votes(n);
+        for (size_t v = 0; v < n; v++)
+        {
+          PyObject* py_row = PyList_GetItem(py_votes, v);
+          if (!PyList_Check(py_row) || PyList_Size(py_row) != 3)
+            throw Exception("Each votes entry must be a list of 3 numbers.");
+          for (size_t k = 0; k < 3; k++)
+          {
+            PyObject* py_item = PyList_GetItem(py_row, k);
+            if (!PyNumber_Check(py_item))
+              throw Exception("Expected numerical values in votes entries.");
+            votes[v][k] = PyFloat_AsDouble(py_item);
+          }
+        }
+        graph->set_votes(votes);
       }
 
       CPMVertexPartition* partition = NULL;
@@ -443,6 +465,7 @@ extern "C"
     PyObject* py_weights = NULL;
     double resolution_parameter = 1.0;
     PyObject* py_node_pop = NULL;
+    PyObject* py_votes = NULL;
     double pop_lambda = 0.0;
     double pop_lambda2 = 0.0;
     double pop_threshold = 0.0;
@@ -451,12 +474,12 @@ extern "C"
 
     static const char* kwlist[] = {"graph", "initial_membership", "weights", "resolution_parameter",
                                    "node_pop", "pop_lambda", "pop_lambda2", "pop_threshold",
-                                   "target_communities", "community_count_lambda", NULL};
+                                   "target_communities", "community_count_lambda", "votes", NULL};
 
-    if (!PyArg_ParseTupleAndKeywords(args, keywds, "O|OOdOdddid", (char**) kwlist,
+    if (!PyArg_ParseTupleAndKeywords(args, keywds, "O|OOdOdddidO", (char**) kwlist,
                                      &py_obj_graph, &py_initial_membership, &py_weights, &resolution_parameter,
                                      &py_node_pop, &pop_lambda, &pop_lambda2, &pop_threshold,
-                                     &target_communities, &community_count_lambda))
+                                     &target_communities, &community_count_lambda, &py_votes))
         return NULL;
 
     try
@@ -464,7 +487,6 @@ extern "C"
 
       Graph* graph = create_graph_from_py(py_obj_graph, NULL, py_weights);
 
-      // Parse and set population vector if provided
       if (py_node_pop != NULL && py_node_pop != Py_None)
       {
         size_t n = graph->vcount();
@@ -480,6 +502,28 @@ extern "C"
           node_pop[v] = PyFloat_AsDouble(py_item);
         }
         graph->set_node_pop(node_pop);
+      }
+
+      if (py_votes != NULL && py_votes != Py_None)
+      {
+        size_t n = graph->vcount();
+        if ((size_t) PyList_Size(py_votes) != n)
+          throw Exception("Votes vector not the same size as the number of nodes.");
+        vector< std::array<double, 3> > votes(n);
+        for (size_t v = 0; v < n; v++)
+        {
+          PyObject* py_row = PyList_GetItem(py_votes, v);
+          if (!PyList_Check(py_row) || PyList_Size(py_row) != 3)
+            throw Exception("Each votes entry must be a list of 3 numbers.");
+          for (size_t k = 0; k < 3; k++)
+          {
+            PyObject* py_item = PyList_GetItem(py_row, k);
+            if (!PyNumber_Check(py_item))
+              throw Exception("Expected numerical values in votes entries.");
+            votes[v][k] = PyFloat_AsDouble(py_item);
+          }
+        }
+        graph->set_votes(votes);
       }
 
       RBConfigurationVertexPartition* partition = NULL;

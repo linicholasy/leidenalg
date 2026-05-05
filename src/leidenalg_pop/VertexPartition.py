@@ -808,7 +808,7 @@ class RBConfigurationVertexPartition(LinearResolutionParameterVertexPartition):
    """
   def __init__(self, graph, initial_membership=None, weights=None, resolution_parameter=1.0,
                node_pop=None, pop_lambda=0.0, pop_lambda2=0.0, pop_threshold=0.0,
-               target_communities=0, community_count_lambda=0.0):
+               target_communities=0, community_count_lambda=0.0, votes=None):
     """
     Parameters
     ----------
@@ -869,17 +869,23 @@ class RBConfigurationVertexPartition(LinearResolutionParameterVertexPartition):
       else:
         node_pop = list(node_pop)
 
+    if votes is not None:
+      if isinstance(votes, str):
+        votes = graph.vs[votes]
+      votes = [list(row) for row in votes]
+
     self.pop_lambda = pop_lambda
     self.pop_lambda2 = pop_lambda2
     self.pop_threshold = pop_threshold
     self.target_communities = target_communities
     self.community_count_lambda = community_count_lambda
     self._node_pop = node_pop
+    self._votes = votes
 
     self._partition = _c_leiden._new_RBConfigurationVertexPartition(pygraph_t,
         initial_membership, weights, resolution_parameter,
         node_pop, pop_lambda, pop_lambda2, pop_threshold,
-        target_communities, community_count_lambda)
+        target_communities, community_count_lambda, votes)
     self._update_internal_membership()
 
   def __deepcopy__(self, memo):
@@ -891,7 +897,8 @@ class RBConfigurationVertexPartition(LinearResolutionParameterVertexPartition):
                                                    pop_lambda2=self.pop_lambda2,
                                                    pop_threshold=self.pop_threshold,
                                                    target_communities=self.target_communities,
-                                                   community_count_lambda=self.community_count_lambda)
+                                                   community_count_lambda=self.community_count_lambda,
+                                                   votes=self._votes)
     return new_partition
 
 class CPMVertexPartition(LinearResolutionParameterVertexPartition):
@@ -940,7 +947,7 @@ class CPMVertexPartition(LinearResolutionParameterVertexPartition):
    """
   def __init__(self, graph, initial_membership=None, weights=None, node_sizes=None, resolution_parameter=1.0, correct_self_loops=None,
                node_pop=None, pop_lambda1=0.0, pop_lambda2=0.0, pop_lambda3=0.0, pop_lambda4=0.0, pop_lambda5=0.0,
-               pop_threshold=0.0):
+               pop_threshold=0.0, votes=None):
     """
     Parameters
     ----------
@@ -1019,10 +1026,14 @@ class CPMVertexPartition(LinearResolutionParameterVertexPartition):
       else:
         node_pop = list(node_pop)
 
+    if votes is not None:
+      if isinstance(votes, str):
+        votes = graph.vs[votes]
+      votes = [list(row) for row in votes]
+
     if correct_self_loops is None:
       correct_self_loops = any(graph.is_loop())
 
-    # Store penalty params for deepcopy and introspection
     self.pop_lambda1 = pop_lambda1
     self.pop_lambda2 = pop_lambda2
     self.pop_lambda3 = pop_lambda3
@@ -1030,11 +1041,12 @@ class CPMVertexPartition(LinearResolutionParameterVertexPartition):
     self.pop_lambda5 = pop_lambda5
     self.pop_threshold = pop_threshold
     self._node_pop = node_pop
+    self._votes = votes
 
     self._partition = _c_leiden._new_CPMVertexPartition(pygraph_t,
         initial_membership, weights, node_sizes, resolution_parameter, correct_self_loops,
         node_pop, pop_lambda1, pop_lambda2, pop_lambda3, pop_lambda4, pop_lambda5,
-        pop_threshold)
+        pop_threshold, votes)
     self._update_internal_membership()
 
   def __deepcopy__(self, memo):
@@ -1047,7 +1059,8 @@ class CPMVertexPartition(LinearResolutionParameterVertexPartition):
                                        pop_lambda3=self.pop_lambda3,
                                        pop_lambda4=self.pop_lambda4,
                                        pop_lambda5=self.pop_lambda5,
-                                       pop_threshold=self.pop_threshold)
+                                       pop_threshold=self.pop_threshold,
+                                       votes=self._votes)
     return new_partition
 
   @classmethod
