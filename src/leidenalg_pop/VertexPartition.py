@@ -808,7 +808,8 @@ class RBConfigurationVertexPartition(LinearResolutionParameterVertexPartition):
    """
   def __init__(self, graph, initial_membership=None, weights=None, resolution_parameter=1.0,
                node_pop=None, pop_lambda=0.0, pop_lambda2=0.0, pop_threshold=0.0,
-               target_communities=0, community_count_lambda=0.0, votes=None, neighbors=None,
+               target_communities=0, community_count_lambda=0.0,
+               dem_votes=None, rep_votes=None, other_votes=None, neighbors=None,
                eg_lambda=0.0, eg_lambda2=0.0, eg_target=0.0):
     """
     Parameters
@@ -870,10 +871,23 @@ class RBConfigurationVertexPartition(LinearResolutionParameterVertexPartition):
       else:
         node_pop = list(node_pop)
 
-    if votes is not None:
-      if isinstance(votes, str):
-        votes = graph.vs[votes]
-      votes = [list(row) for row in votes]
+    if dem_votes is not None:
+      if isinstance(dem_votes, str):
+        dem_votes = graph.vs[dem_votes]
+      else:
+        dem_votes = list(dem_votes)
+
+    if rep_votes is not None:
+      if isinstance(rep_votes, str):
+        rep_votes = graph.vs[rep_votes]
+      else:
+        rep_votes = list(rep_votes)
+
+    if other_votes is not None:
+      if isinstance(other_votes, str):
+        other_votes = graph.vs[other_votes]
+      else:
+        other_votes = list(other_votes)
 
     if neighbors is not None:
       if isinstance(neighbors, str):
@@ -889,13 +903,16 @@ class RBConfigurationVertexPartition(LinearResolutionParameterVertexPartition):
     self.eg_lambda2 = eg_lambda2
     self.eg_target = eg_target
     self._node_pop = node_pop
-    self._votes = votes
+    self._dem_votes = dem_votes
+    self._rep_votes = rep_votes
+    self._other_votes = other_votes
     self._neighbors = neighbors
 
     self._partition = _c_leiden._new_RBConfigurationVertexPartition(pygraph_t,
         initial_membership, weights, resolution_parameter,
         node_pop, pop_lambda, pop_lambda2, pop_threshold,
-        target_communities, community_count_lambda, votes, neighbors,
+        target_communities, community_count_lambda,
+        dem_votes, rep_votes, other_votes, neighbors,
         eg_lambda, eg_lambda2, eg_target)
     self._update_internal_membership()
 
@@ -909,7 +926,9 @@ class RBConfigurationVertexPartition(LinearResolutionParameterVertexPartition):
                                                    pop_threshold=self.pop_threshold,
                                                    target_communities=self.target_communities,
                                                    community_count_lambda=self.community_count_lambda,
-                                                   votes=self._votes,
+                                                   dem_votes=self._dem_votes,
+                                                   rep_votes=self._rep_votes,
+                                                   other_votes=self._other_votes,
                                                    neighbors=self._neighbors,
                                                    eg_lambda=self.eg_lambda,
                                                    eg_lambda2=self.eg_lambda2,
@@ -962,7 +981,7 @@ class CPMVertexPartition(LinearResolutionParameterVertexPartition):
    """
   def __init__(self, graph, initial_membership=None, weights=None, node_sizes=None, resolution_parameter=1.0, correct_self_loops=None,
                node_pop=None, pop_lambda1=0.0, pop_lambda2=0.0, pop_lambda3=0.0, pop_lambda4=0.0, pop_lambda5=0.0,
-               pop_threshold=0.0, votes=None, neighbors=None):
+               pop_threshold=0.0, dem_votes=None, rep_votes=None, other_votes=None, neighbors=None):
     """
     Parameters
     ----------
@@ -1041,10 +1060,23 @@ class CPMVertexPartition(LinearResolutionParameterVertexPartition):
       else:
         node_pop = list(node_pop)
 
-    if votes is not None:
-      if isinstance(votes, str):
-        votes = graph.vs[votes]
-      votes = [list(row) for row in votes]
+    if dem_votes is not None:
+      if isinstance(dem_votes, str):
+        dem_votes = graph.vs[dem_votes]
+      else:
+        dem_votes = list(dem_votes)
+
+    if rep_votes is not None:
+      if isinstance(rep_votes, str):
+        rep_votes = graph.vs[rep_votes]
+      else:
+        rep_votes = list(rep_votes)
+
+    if other_votes is not None:
+      if isinstance(other_votes, str):
+        other_votes = graph.vs[other_votes]
+      else:
+        other_votes = list(other_votes)
 
     if neighbors is not None:
       if isinstance(neighbors, str):
@@ -1061,13 +1093,15 @@ class CPMVertexPartition(LinearResolutionParameterVertexPartition):
     self.pop_lambda5 = pop_lambda5
     self.pop_threshold = pop_threshold
     self._node_pop = node_pop
-    self._votes = votes
+    self._dem_votes = dem_votes
+    self._rep_votes = rep_votes
+    self._other_votes = other_votes
     self._neighbors = neighbors
 
     self._partition = _c_leiden._new_CPMVertexPartition(pygraph_t,
         initial_membership, weights, node_sizes, resolution_parameter, correct_self_loops,
         node_pop, pop_lambda1, pop_lambda2, pop_lambda3, pop_lambda4, pop_lambda5,
-        pop_threshold, votes, neighbors)
+        pop_threshold, dem_votes, rep_votes, other_votes, neighbors)
     self._update_internal_membership()
 
   def __deepcopy__(self, memo):
@@ -1081,7 +1115,9 @@ class CPMVertexPartition(LinearResolutionParameterVertexPartition):
                                        pop_lambda4=self.pop_lambda4,
                                        pop_lambda5=self.pop_lambda5,
                                        pop_threshold=self.pop_threshold,
-                                       votes=self._votes,
+                                       dem_votes=self._dem_votes,
+                                       rep_votes=self._rep_votes,
+                                       other_votes=self._other_votes,
                                        neighbors=self._neighbors)
     return new_partition
 
