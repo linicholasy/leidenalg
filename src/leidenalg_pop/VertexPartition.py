@@ -810,7 +810,8 @@ class RBConfigurationVertexPartition(LinearResolutionParameterVertexPartition):
                node_pop=None, pop_lambda=0.0, pop_lambda2=0.0, pop_threshold=0.0,
                target_communities=0, community_count_lambda=0.0,
                dem_votes=None, rep_votes=None, other_votes=None, neighbors=None,
-               eg_lambda=0.0, eg_lambda2=0.0, eg_target=0.0):
+               eg_lambda=0.0, eg_lambda2=0.0, eg_target=0.0,
+               cont_lambda=0.0, cont_lambda2=0.0):
     """
     Parameters
     ----------
@@ -902,6 +903,8 @@ class RBConfigurationVertexPartition(LinearResolutionParameterVertexPartition):
     self.eg_lambda = eg_lambda
     self.eg_lambda2 = eg_lambda2
     self.eg_target = eg_target
+    self.cont_lambda = cont_lambda
+    self.cont_lambda2 = cont_lambda2
     self._node_pop = node_pop
     self._dem_votes = dem_votes
     self._rep_votes = rep_votes
@@ -913,7 +916,8 @@ class RBConfigurationVertexPartition(LinearResolutionParameterVertexPartition):
         node_pop, pop_lambda, pop_lambda2, pop_threshold,
         target_communities, community_count_lambda,
         dem_votes, rep_votes, other_votes, neighbors,
-        eg_lambda, eg_lambda2, eg_target)
+        eg_lambda, eg_lambda2, eg_target,
+        cont_lambda, cont_lambda2)
     self._update_internal_membership()
 
   def __deepcopy__(self, memo):
@@ -932,7 +936,9 @@ class RBConfigurationVertexPartition(LinearResolutionParameterVertexPartition):
                                                    neighbors=self._neighbors,
                                                    eg_lambda=self.eg_lambda,
                                                    eg_lambda2=self.eg_lambda2,
-                                                   eg_target=self.eg_target)
+                                                   eg_target=self.eg_target,
+                                                   cont_lambda=self.cont_lambda,
+                                                   cont_lambda2=self.cont_lambda2)
     return new_partition
 
 class CPMVertexPartition(LinearResolutionParameterVertexPartition):

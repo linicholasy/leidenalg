@@ -1,4 +1,4 @@
-LIBLEIDENALG_BRANCH=rbc-constraints
+LIBLEIDENALG_BRANCH=contiguity
 LIBLEIDENALG_REPO=https://github.com/massafn/libleidenalg.git
 
 ROOT_DIR=`pwd`
