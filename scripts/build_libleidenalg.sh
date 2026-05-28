@@ -1,4 +1,4 @@
-LIBLEIDENALG_BRANCH=contiguity
+LIBLEIDENALG_BRANCH=contiguity-components
 LIBLEIDENALG_REPO=https://github.com/massafn/libleidenalg.git
 
 ROOT_DIR=`pwd`
