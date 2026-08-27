@@ -1,5 +1,5 @@
-LIBLEIDENALG_BRANCH=contiguity-components
-LIBLEIDENALG_REPO=https://github.com/massafn/libleidenalg.git
+LIBLEIDENALG_BRANCH=relative-pop-penalty
+LIBLEIDENALG_REPO=https://github.com/linicholasy/libleidenalg.git
 
 ROOT_DIR=`pwd`
 echo "Using root dir ${ROOT_DIR}"
