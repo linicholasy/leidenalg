@@ -853,13 +853,30 @@ class RBConfigurationVertexPartition(LinearResolutionParameterVertexPartition):
       Penalty weight for deviating from target community count.
       Defaults to 0.0 (no penalty).
 
-    pop_relative : bool
-      If :obj:`True`, the population penalty is on the relative deviation
-      ``cpop/target - 1`` instead of the absolute deviation
-      ``cpop - target``. The absolute form gives a merge barrier of order
-      ``pop_lambda2 * target**2``, which grows as the number of communities
-      falls; the relative form keeps that barrier constant in the community
-      count. Defaults to :obj:`False` (absolute deviation).
+    pop_relative : int
+      How the population penalty measures a community's deviation.
+
+      ``0`` (default) absolute, ``cpop - target``. The merge barrier is of
+      order ``pop_lambda2 * target**2``, which grows as the number of
+      communities falls and the target rises.
+
+      ``1`` relative, ``cpop/target - 1``, summed over communities. This
+      makes the barrier constant in the community count, but constant at a
+      level set by the *end* of the run: any single merge makes one community
+      twice the target, a deviation of 1, and is charged ``pop_lambda2`` for
+      it whether there are 2000 communities or 10. Measured on a 2161-tract
+      graph, no usable ``pop_lambda2`` exists -- the penalty is either inert
+      or it freezes the solve near the singleton partition.
+
+      ``2`` relative and divided by the community count, i.e. the mean rather
+      than the sum. Because every vertex is assigned, the mean community
+      population is exactly the target, so this is the squared coefficient of
+      variation of the community populations. It is free of the community
+      count: an early merge is charged ``pop_lambda2 / K`` rather than
+      ``pop_lambda2``, so the barrier scales down with the number of
+      communities instead of staying at its end-of-run level.
+
+      :obj:`True` and :obj:`False` are accepted as ``1`` and ``0``.
 
     community_count_floor_only : bool
       If :obj:`True`, the community count penalty is one-way:
