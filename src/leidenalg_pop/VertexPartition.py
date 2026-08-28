@@ -812,7 +812,8 @@ class RBConfigurationVertexPartition(LinearResolutionParameterVertexPartition):
                dem_votes=None, rep_votes=None, other_votes=None, neighbors=None,
                eg_lambda=0.0, eg_lambda2=0.0, eg_target=0.0,
                cont_lambda=0.0, cont_lambda2=0.0,
-               pop_relative=False, community_count_floor_only=False):
+               pop_relative=False, community_count_floor_only=False,
+               pop_count_exponent=1.0):
     """
     Parameters
     ----------
@@ -878,6 +879,22 @@ class RBConfigurationVertexPartition(LinearResolutionParameterVertexPartition):
 
       :obj:`True` and :obj:`False` are accepted as ``1`` and ``0``.
 
+    pop_count_exponent : double
+      Exponent ``a`` in the mode-2 scale ``pop_lambda2 / K**a``, where ``K``
+      is the current number of communities. Read only when
+      ``pop_relative == 2``; the other modes are unscaled. Defaults to
+      ``1.0``, which is the mean form described above.
+
+      ``a = 1`` is the only value that is neutral in the community count: the
+      same ``pop_lambda2`` means the same thing at every ``K``, so the target
+      number of communities can be changed without recalibrating it. Raising
+      ``a`` lowers the barrier against early merges faster than it lowers the
+      penalty at the final ``K``, so a ``pop_lambda2`` big enough to hold the
+      population spread at the end can still be passable at the start. The
+      price is that the same ``pop_lambda2`` is then ``(K1/K2)**a`` times
+      stronger at ``K2`` than at ``K1``, and has to be re-tuned whenever the
+      district count changes.
+
     community_count_floor_only : bool
       If :obj:`True`, the community count penalty is one-way:
       ``max(0, target_communities - current_count)`` instead of
@@ -941,6 +958,7 @@ class RBConfigurationVertexPartition(LinearResolutionParameterVertexPartition):
     self.cont_lambda2 = cont_lambda2
     self.pop_relative = pop_relative
     self.community_count_floor_only = community_count_floor_only
+    self.pop_count_exponent = pop_count_exponent
     self._node_pop = node_pop
     self._dem_votes = dem_votes
     self._rep_votes = rep_votes
@@ -954,7 +972,8 @@ class RBConfigurationVertexPartition(LinearResolutionParameterVertexPartition):
         dem_votes, rep_votes, other_votes, neighbors,
         eg_lambda, eg_lambda2, eg_target,
         cont_lambda, cont_lambda2,
-        int(pop_relative), int(community_count_floor_only))
+        int(pop_relative), int(community_count_floor_only),
+        float(pop_count_exponent))
     self._update_internal_membership()
 
   def __deepcopy__(self, memo):
@@ -977,7 +996,8 @@ class RBConfigurationVertexPartition(LinearResolutionParameterVertexPartition):
                                                    cont_lambda=self.cont_lambda,
                                                    cont_lambda2=self.cont_lambda2,
                                                    pop_relative=self.pop_relative,
-                                                   community_count_floor_only=self.community_count_floor_only)
+                                                   community_count_floor_only=self.community_count_floor_only,
+                                                   pop_count_exponent=self.pop_count_exponent)
     return new_partition
 
 class CPMVertexPartition(LinearResolutionParameterVertexPartition):

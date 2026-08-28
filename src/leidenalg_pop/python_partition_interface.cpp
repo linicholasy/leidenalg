@@ -523,6 +523,7 @@ extern "C"
     double cont_lambda2 = 0.0;
     int pop_relative = 0;
     int community_count_floor_only = 0;
+    double pop_count_exponent = 1.0;
 
     static const char* kwlist[] = {"graph", "initial_membership", "weights", "resolution_parameter",
                                    "node_pop", "pop_lambda", "pop_lambda2", "pop_threshold",
@@ -530,16 +531,18 @@ extern "C"
                                    "dem_votes", "rep_votes", "other_votes", "neighbors",
                                    "eg_lambda", "eg_lambda2", "eg_target",
                                    "cont_lambda", "cont_lambda2",
-                                   "pop_relative", "community_count_floor_only", NULL};
+                                   "pop_relative", "community_count_floor_only",
+                                   "pop_count_exponent", NULL};
 
-    if (!PyArg_ParseTupleAndKeywords(args, keywds, "O|OOdOdddidOOOOdddddii", (char**) kwlist,
+    if (!PyArg_ParseTupleAndKeywords(args, keywds, "O|OOdOdddidOOOOdddddiid", (char**) kwlist,
                                      &py_obj_graph, &py_initial_membership, &py_weights, &resolution_parameter,
                                      &py_node_pop, &pop_lambda, &pop_lambda2, &pop_threshold,
                                      &target_communities, &community_count_lambda,
                                      &py_dem_votes, &py_rep_votes, &py_other_votes, &py_neighbors,
                                      &eg_lambda, &eg_lambda2, &eg_target,
                                      &cont_lambda, &cont_lambda2,
-                                     &pop_relative, &community_count_floor_only))
+                                     &pop_relative, &community_count_floor_only,
+                                     &pop_count_exponent))
         return NULL;
 
     try
@@ -620,7 +623,8 @@ extern "C"
                                                        target_communities, community_count_lambda,
                                                        eg_lambda, eg_lambda2, eg_target,
                                                        cont_lambda, cont_lambda2,
-                                                       pop_relative, community_count_floor_only);
+                                                       pop_relative, community_count_floor_only,
+                                                       pop_count_exponent);
       }
       else
         partition = new RBConfigurationVertexPartition(graph, resolution_parameter,
@@ -628,7 +632,8 @@ extern "C"
                                                        target_communities, community_count_lambda,
                                                        eg_lambda, eg_lambda2, eg_target,
                                                        cont_lambda, cont_lambda2,
-                                                       pop_relative, community_count_floor_only);
+                                                       pop_relative, community_count_floor_only,
+                                                       pop_count_exponent);
 
       // Do *NOT* forget to remove the graph upon deletion
       partition->destructor_delete_graph = true;
